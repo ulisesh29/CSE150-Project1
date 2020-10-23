@@ -14,6 +14,11 @@ public class Communicator {
      * Allocate a new communicator.
      */
     public Communicator() {
+    	mutex = new Lock();				//implement mutex function
+    	
+		//here we implement a listen function and a speaking function 
+		LReadyUp = new Condition(mutex);		
+		SReadyUp = new Condition(mutex); 		
     }
 
     /**
@@ -27,6 +32,19 @@ public class Communicator {
      * @param	word	the integer to transfer.
      */
     public void speak(int word) {
+    	mutex.acquire();
+		SpeakingFunc++;
+		
+		//put to sleep the ListenFunc. 
+		while(ListingFunc = 0){
+			LReadyUp.sleep();
+		}
+		
+		--ListeningFunc; 
+		
+		//once that’s done we have to wake the SpeakFunc.
+		SReadyUp.wake();
+		mutex.release();
     }
 
     /**
@@ -36,6 +54,26 @@ public class Communicator {
      * @return	the integer transferred.
      */    
     public int listen() {
+    	mutex.acquire();
+		ListeningFunc++;
+		
+		LReadyUp.wake();
+		
+		while(SpeakingFunc = 0){
+			SReadyUp.sleep();
+		}
+		
+		--SpeakingFunc;
+		
+		mutex.release();
+    	
 	return 0;
     }
+    private Condition LReadyUp;
+	private Condition SReadyUp;
+	private int SpeakingFunc = 0;
+	private int ListeningFunc = 0;
+	private int messenger;
+	private Lock mutex;
+    
 }
