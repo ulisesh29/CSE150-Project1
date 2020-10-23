@@ -276,7 +276,27 @@ public class KThread {
 	Lib.debug(dbgThread, "Joining to thread: " + toString());
 
 	Lib.assertTrue(this != currentThread);
-
+	    
+	Machine.interrupt().disable();
+	// We need to create a joinQueue where the thread will wait
+	ThreadQueue joinQueue = ThreadedKernel.scheduler.newThreadQueue(true);
+	
+	// To test if it wants to join with itself
+	if(this.compareTo(currentThread) == 0) {
+		return;
+	}
+	
+	// To test if current thread is already done, if so, return
+	if(status == statusFinished) {
+		return;
+	}
+	else {
+		joinQueue.acquire(this);
+		joinQueue.waitForAccess(currentThread);
+		// currentThread.sleep();
+		sleep();
+	}
+	Machine.interrupt().enable();
     }
 
     /**
