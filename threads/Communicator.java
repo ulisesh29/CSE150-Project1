@@ -41,7 +41,7 @@ public class Communicator {
 		}
 		
 		--ListeningFunc; 
-		
+		words = word
 		//once that’s done we have to wake the SpeakFunc.
 		SReadyUp.wake();
 		mutex.release();
@@ -67,13 +67,13 @@ public class Communicator {
 		
 		mutex.release();
     	
-	return 0;
+	return words;
     }
     private Condition LReadyUp;
 	private Condition SReadyUp;
 	private int SpeakingFunc = 0;
 	private int ListeningFunc = 0;
-	private int messenger;
+	private int words;
 	private Lock mutex;
     
 }
