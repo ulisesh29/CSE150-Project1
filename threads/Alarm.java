@@ -38,14 +38,14 @@ public class Alarm {
     	WaitingThread nextThread;
     	nextThread = waitingQueue.peek();
 
-		while (nextThread.wakeTime() <= currentTime && nextThread != null) {
+	while (nextThread.wakeTime() <= currentTime && nextThread != null) {
 			
-			waitingQueue.poll().thread().ready();
-		}
+		waitingQueue.poll().thread().ready();
+	}
 
-		Machine.interrupt().restore(status);
+	Machine.interrupt().restore(status);
 
-		KThread.currentThread().yield();
+	KThread.currentThread().yield();
     }
 
     /**
@@ -76,12 +76,12 @@ public class Alarm {
     	}
     	*/
 
-		boolean status = Machine.interrupt().disable();
+	boolean status = Machine.interrupt().disable();
 
-		waitingQueue.add(new WaitingThread(wakeTime, KThread.currentThread()));
+	waitingQueue.add(new WaitingThread(wakeTime, KThread.currentThread()));
 
-		KThread.sleep();
-		Machine.interrupt().restore(status);
+	KThread.sleep();
+	Machine.interrupt().restore(status);
     }
     
     private class WaitingThread implements Comparable<WaitingThread> {
