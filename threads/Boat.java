@@ -5,6 +5,16 @@ public class Boat
 {
     static BoatGrader bg;
     
+    static int numAdultsOahu;
+    static int numAdultsMolokai;
+    static int numChildrenOahu;
+    static int numChildrenMolokai;
+    
+    static String boatLocation;
+    
+    // we need more variables
+    
+    
     public static void selfTest()
     {
 	BoatGrader b = new BoatGrader();
@@ -24,17 +34,59 @@ public class Boat
 	// Store the externally generated autograder in a class
 	// variable to be accessible by children.
 	bg = b;
+	
 
 	// Instantiate global variables here
 	
+	numAdultsOahu = 0;
+	numAdultsMolokai = 0;
+	numChildrenOahu = 0;
+	numChildrenMolokai = 0;
+	
+	boatLocation = "Oahu";
+	    
+	    // we need to define the variables we added from above
+	
 	// Create threads here. See section 3.4 of the Nachos for Java
+	
+	KThread thread;
+	
 	// Walkthrough linked from the projects page.
+	
+	for(int i = 0; i < adults; i++) {
+		
+		 Runnable adult = new Runnable() {
+		        public void run() {
+		            AdultItinerary();
+		        }
+		    };
+		    
+		    thread = new KThread(adult);
+		    thread.fork();	
+		    
+		    //setName
+	}
+	
+    for(int i = 0; i < children; i++) {
+    	
+    	Runnable child = new Runnable() {
+    	    public void run() {
+                    ChildItinerary();
+                }
+            };
+            
+            thread = new KThread(child);
+            thread.fork();
+            
+            //setName
+    }
 
 	Runnable r = new Runnable() {
 	    public void run() {
                 SampleItinerary();
             }
         };
+        
         KThread t = new KThread(r);
         t.setName("Sample Boat Thread");
         t.fork();
@@ -69,3 +121,4 @@ public class Boat
     }
     
 }
+
