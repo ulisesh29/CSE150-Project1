@@ -31,11 +31,20 @@ public class Condition2 {
      * automatically reacquire the lock before <tt>sleep()</tt> returns.
      */
     public void sleep() {
+    	
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+	
+	boolean status = Machine.interrupt().disable(); //referenced from Semaphore.java
+	
+	waitQueue.waitForAccess(KThread.currentThread()); //put thread on wait queue
 
-	conditionLock.release();
+	conditionLock.release(); 
+	
+	KThread.sleep(); //sleep thread
 
 	conditionLock.acquire();
+	
+	Machine.interrupt().restore(status);
     }
 
     /**
@@ -44,6 +53,15 @@ public class Condition2 {
      */
     public void wake() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+	
+	boolean status = Machine.interrupt().disable();
+	
+		KThread nextThread = waitQueue.nextThread();
+		
+	if (nextThread != null)
+			nextThread.ready();
+	
+	Machine.interrupt().restore(status);
     }
 
     /**
@@ -52,6 +70,16 @@ public class Condition2 {
      */
     public void wakeAll() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+	
+	boolean status = Machine.interrupt().disable();
+	
+	KThread nextThread;
+	
+	while ((nextThread = waitQueue.nextThread()) != null)
+		nextThread.ready();
+	
+	Machine.interrupt().restore(status);
+	
     }
 
     private Lock conditionLock;
