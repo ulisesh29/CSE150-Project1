@@ -9,14 +9,25 @@ public class Boat
     static int numAdultsMolokai;
     static int numChildrenOahu;
     static int numChildrenMolokai;
-    static int ChildrenQueueforBoat;
-    Static int NumberOfBoatTrips;
+    
+    //we need more variables
+    //static int ChildrenQueueforBoat; may need
+    //static int NumberOfBoatTrips; may need
+    //static String boatLocation; not sure how to implement
+    
     static Lock lock;
+    static Lock LBoat;
+    static Lock WaitLock;
+    static Lock Locka;
+    static Lock Lockb;
     
-    static String boatLocation;
+    static Communicator doneWithride;
     
-    // we need more variables
+    static boolean LiftGiven;
     
+    static Conditon2 Coordinate;
+    static Condition2 childrenMolokai;
+    static Condition2 forTheboat;
     
     public static void selfTest()
     {
@@ -25,11 +36,11 @@ public class Boat
 	System.out.println("\n ***Testing Boats with only 2 children***");
 	begin(0, 2, b);
 
-//	System.out.println("\n ***Testing Boats with 2 children, 1 adult***");
-//  	begin(1, 2, b);
+	System.out.println("\n ***Testing Boats with 2 children, 1 adult***");
+  	begin(1, 2, b);
 
-//  	System.out.println("\n ***Testing Boats with 3 children, 3 adults***");
-//  	begin(3, 3, b);
+  	System.out.println("\n ***Testing Boats with 3 children, 3 adults***");
+  	begin(3, 3, b);
     }
 
     public static void begin( int adults, int children, BoatGrader b )
@@ -45,12 +56,25 @@ public class Boat
 	numAdultsMolokai = 0;
 	numChildrenOahu = 0;
 	numChildrenMolokai = 0;
-	ChildrenQueueforBoat = 0;
-	NumberOfBoatTrips = 0;
+//	ChildrenQueueforBoat = 0;
+//	NumberOfBoatTrips = 0;
+//	boatLocation = "Oahu";
 	
-	boatLocation = "Oahu";
+	LiftGiven = false;
+	
+	doneWithride = new Communicator();
+	
+	lock = new Lock();
+    LBoat = new Lock();
+    WaitLock = new Lock();
+    Locka = new Lock();
+    Lockb = new Lock();
+    
+    childrenMolokai = new Condition2 (Locka);
+    Coordinate = new Condition2 (Lockb);
+    forTheboat =  new Condition2 (WaitLock);
 	    
-	    // we need to define the variables we added from above
+	// we need to define the variables we added from above
 	
 	// Create threads here. See section 3.4 of the Nachos for Java
 	
@@ -69,7 +93,7 @@ public class Boat
 		    thread = new KThread(adult);
 		    thread.fork();	
 		    
-		    //setName
+		    t.setName("Adult #" +i);
 	}
 	
     for(int i = 0; i < children; i++) {
@@ -83,7 +107,7 @@ public class Boat
             thread = new KThread(child);
             thread.fork();
             
-            //setName
+            t.setName("Child #" + i);
     }
 
 	Runnable r = new Runnable() {
@@ -99,7 +123,7 @@ public class Boat
     }
 
     static void AdultItinerary()
-    {
+    {	   bg.initializeAdult();
 	/* This is where you should put your solutions. Make calls
 	   to the BoatGrader to show that it is synchronized. For
 	   example:
@@ -108,19 +132,117 @@ public class Boat
 	*/
 	   lock.aquire(); 
 	   numAdultsOahu++;
-	   lock.releease();
+	   lock.release();
+	   
+	   Locka.aquire();
+	   childrenMolokai.sleep();
+	   Locka.release();
+	   
+	   bg.AdultRowToMolokai();
+	   numAdultsOahu--;
+	   
+	   Lockb.aquire();
+	   Coordinate.wake();
+	   Lockb.release();
 	    
     }
 
     static void ChildItinerary(){
+    	
+    	bg.initializeChild();
+    	
 	    lock.acquire();
+	    numChildrenOahu++;
+	    lock.release();
 	    
+	    KThread.alarm.waitUntil(500);
 	    
-	    
+	    while(true){
+	    	
+	    	LBoat.aquire();
+	    	
+	    	if(!LiftGiven && numChildrenOahu > 0 ){
+	    		
+	    		LiftGiven = true;
+	    		bg.ChildRideToMolokai();
+	    		
+	    		numChildrenOahu--;
+	    		numChildrenMolokai++;
+	    		
+	    		LBoat.release();
+	    		
+	    		while(true){
+	    			
+	    			Lockb.aquire();
+	    			Coordinate.sleep();
+	    			Lockb.release();
+	    			
+	    			bg.ChildRowToOahu();
+	    			
+	    			WaitLock.aquire();
+	    			forTheboat.wake();
+	    			WaitLock.relase();
+	    			
+	    			bg.ChildRideToMolokai();
+	    			
+	    		}
+	    		
+	    	}else{
+	    		
+	    		LiftGiven = false;
+	    		bg.ChildRowToMolokai();
+	    		
+	    		numChildrenOahu--;
+	    		numChildrenMolokai++;
+	    		
+	    		if(numChildrenOahu > 0){
+	    			
+	    			bg.ChildRowToOahu();
+	    			
+	    			numChildrenMolokai--;
+	    			numChildrenOahu++;
+	    			
+	    			LBoat.release();
+	    			
+	    		}else{
+	    			
+	    			bg.ChildRowToOahu();
+	    			
+	    			numChildrenMolokai--;
+	    			numChildrenOahu++;
+	    			
+	    			while(numAdultsOahu > 0){
+	    				
+	    				Locka.aquire();
+	    				childrenMolokai.wake();
+	    				Locka.release();
+	    				
+	    				WaitLock.aquire();
+	    				forTheboat.sleep();
+	    				WaitLock.release();
+	    				
+	    				bg.ChildRowToMolokai();
+	    				bg.ChildRowToOahu();
+	    				
+	    			}
+	    			
+	    			bg.ChildRowToMolokai();
+	    			
+	    			numChildrenMolokai++;
+	    			numChildrenOahu--;
+	    			
+	    			doneWithride.speak(1);
+	    			return;
+	    			
+	    		}	
+	    		
+	    	}
+	    		
+	    }
 	    
     }
 
- /*   static void SampleItinerary()
+    static void SampleItinerary()
     {
 	// Please note that this isn't a valid solution (you can't fit
 	// all of them on the boat). Please also note that you may not
