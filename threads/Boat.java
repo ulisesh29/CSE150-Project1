@@ -93,7 +93,7 @@ public class Boat
 		    thread = new KThread(adult);
 		    thread.fork();	
 		    
-		    t.setName("Adult #" +i);
+		    thread.setName("Adult #" +i);
 	}
 	
     for(int i = 0; i < children; i++) {
@@ -107,7 +107,7 @@ public class Boat
             thread = new KThread(child);
             thread.fork();
             
-            t.setName("Child #" + i);
+            thread.setName("Child #" + i);
     }
 
 	Runnable r = new Runnable() {
