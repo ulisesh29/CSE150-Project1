@@ -9,6 +9,9 @@ public class Boat
     static int numAdultsMolokai;
     static int numChildrenOahu;
     static int numChildrenMolokai;
+    static int ChildrenQueueforBoat;
+    Static int NumberOfBoatTrips;
+    static Lock lock;
     
     static String boatLocation;
     
@@ -42,6 +45,8 @@ public class Boat
 	numAdultsMolokai = 0;
 	numChildrenOahu = 0;
 	numChildrenMolokai = 0;
+	ChildrenQueueforBoat = 0;
+	NumberOfBoatTrips = 0;
 	
 	boatLocation = "Oahu";
 	    
@@ -101,13 +106,21 @@ public class Boat
 	       bg.AdultRowToMolokai();
 	   indicates that an adult has rowed the boat across to Molokai
 	*/
+	   lock.aquire(); 
+	   numAdultsOahu++;
+	   lock.releease();
+	    
     }
 
-    static void ChildItinerary()
-    {
+    static void ChildItinerary(){
+	    lock.acquire();
+	    
+	    
+	    
+	    
     }
 
-    static void SampleItinerary()
+ /*   static void SampleItinerary()
     {
 	// Please note that this isn't a valid solution (you can't fit
 	// all of them on the boat). Please also note that you may not
