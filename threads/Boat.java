@@ -25,7 +25,7 @@ public class Boat
     
     static boolean LiftGiven;
     
-    static Conditon2 Coordinate;
+    static Condition2 Coordinate;
     static Condition2 childrenMolokai;
     static Condition2 forTheboat;
     
@@ -130,18 +130,18 @@ public class Boat
 	       bg.AdultRowToMolokai();
 	   indicates that an adult has rowed the boat across to Molokai
 	*/
-	   lock.aquire(); 
+	   lock.acquire(); 
 	   numAdultsOahu++;
 	   lock.release();
 	   
-	   Locka.aquire();
+	   Locka.acquire();
 	   childrenMolokai.sleep();
 	   Locka.release();
 	   
 	   bg.AdultRowToMolokai();
 	   numAdultsOahu--;
 	   
-	   Lockb.aquire();
+	   Lockb.acquire();
 	   Coordinate.wake();
 	   Lockb.release();
 	    
@@ -173,15 +173,15 @@ public class Boat
 	    		
 	    		while(true){
 	    			
-	    			Lockb.aquire();
+	    			Lockb.acquire();
 	    			Coordinate.sleep();
 	    			Lockb.release();
 	    			
 	    			bg.ChildRowToOahu();
 	    			
-	    			WaitLock.aquire();
+	    			WaitLock.acquire();
 	    			forTheboat.wake();
-	    			WaitLock.relase();
+	    			WaitLock.release();
 	    			
 	    			bg.ChildRideToMolokai();
 	    			
@@ -213,11 +213,11 @@ public class Boat
 	    			
 	    			while(numAdultsOahu > 0){
 	    				
-	    				Locka.aquire();
+	    				Locka.acquire();
 	    				childrenMolokai.wake();
 	    				Locka.release();
 	    				
-	    				WaitLock.aquire();
+	    				WaitLock.acquire();
 	    				forTheboat.sleep();
 	    				WaitLock.release();
 	    				
