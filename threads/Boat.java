@@ -123,7 +123,7 @@ public class Boat
     }
 
     static void AdultItinerary()
-    {	   bg.initializeAdult();
+    {	   begin(0, 0, bg);
 	/* This is where you should put your solutions. Make calls
 	   to the BoatGrader to show that it is synchronized. For
 	   example:
@@ -149,7 +149,7 @@ public class Boat
 
     static void ChildItinerary(){
     	
-    	bg.initializeChild();
+    	begin(0, 0, bg);
     	
 	    lock.acquire();
 	    numChildrenOahu++;
