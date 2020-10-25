@@ -22,6 +22,7 @@ public class Boat
     static Lock Lockb;
     
     static Communicator doneWithride;
+    static Alarm alarm;
     
     static boolean LiftGiven;
     
@@ -48,6 +49,7 @@ public class Boat
 	// Store the externally generated autograder in a class
 	// variable to be accessible by children.
 	bg = b;
+	alarm = new Alarm();
 	
 
 	// Instantiate global variables here
@@ -155,7 +157,7 @@ public class Boat
 	    numChildrenOahu++;
 	    lock.release();
 	    
-	    KThread.alarm.waitUntil(500);
+	    alarm.waitUntil(500);
 	    
 	    while(true){
 	    	
