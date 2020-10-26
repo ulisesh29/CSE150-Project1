@@ -79,7 +79,7 @@ public class Condition2 {
 	
 	while ((nextThread = waitQueue.nextThread()) != null) {
 		
-		nextThread.wake();
+		nextThread.ready();
 	}
 	
 	Machine.interrupt().restore(status);
@@ -87,5 +87,5 @@ public class Condition2 {
     }
 
     private Lock conditionLock;
-    private ThreadQueue waitQueue = ThreadedKernel.scheduler.newThreadQueue(false);
+    private ThreadQueue waitQueue = ThreadedKernel.scheduler.newThreadQueue(true);
 }
