@@ -38,14 +38,13 @@ public class Alarm {
     	WaitingThread nextThread;
     	nextThread = waitingQueue.peek();
 
-	while (nextThread.wakeTime() <= currentTime && nextThread != null) {
+		while (nextThread.wakeTime() <= currentTime && nextThread != null) {
 			
-		waitingQueue.poll().thread().ready();
-	}
+			waitingQueue.poll().thread().ready();
+		}
 
-	Machine.interrupt().restore(status);
-
-	KThread.currentThread().yield();
+		KThread.yield();
+		Machine.interrupt().restore(status);
     }
 
     /**
@@ -76,12 +75,12 @@ public class Alarm {
     	}
     	*/
 
-	boolean status = Machine.interrupt().disable();
+		boolean status = Machine.interrupt().disable();
 
-	waitingQueue.add(new WaitingThread(wakeTime, KThread.currentThread()));
+		waitingQueue.add(new WaitingThread(wakeTime, KThread.currentThread()));
 
-	KThread.sleep();
-	Machine.interrupt().restore(status);
+		KThread.sleep();
+		Machine.interrupt().restore(status);
     }
     
     private class WaitingThread implements Comparable<WaitingThread> {
@@ -106,7 +105,7 @@ public class Alarm {
 			}
 			else {
 				
-				return thread.compareTo(waitingThread.thread);
+				return 0; //thread.compareTo(waitingThread.thread);
 			}
 		}
 
@@ -119,8 +118,8 @@ public class Alarm {
 			
 			return wakeTime;
 		}
-
-		KThread thread; 
+		
+		KThread thread;
 		long wakeTime;
     }
     
