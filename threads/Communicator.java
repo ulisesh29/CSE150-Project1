@@ -36,7 +36,7 @@ public class Communicator {
 		SpeakingFunc++;
 		
 		//put to sleep the ListenFunc. 
-		while(ListeningFunc = 0){
+		while(ListeningFunc == 0){
 			LReadyUp.sleep();
 		}
 		
@@ -59,7 +59,7 @@ public class Communicator {
 		
 		LReadyUp.wake();
 		
-		while(SpeakingFunc = 0){
+		while(SpeakingFunc == 0){
 			SReadyUp.sleep();
 		}
 		
