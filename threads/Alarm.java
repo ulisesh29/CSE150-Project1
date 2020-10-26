@@ -119,10 +119,10 @@ public class Alarm {
 			return wakeTime;
 		}
 		
-		KThread thread;
+		private KThread thread;
 		long wakeTime;
     }
     
-	PriorityQueue<WaitingThread> waitingQueue = new PriorityQueue<WaitingThread>();
+	private PriorityQueue<WaitingThread> waitingQueue = new PriorityQueue<WaitingThread>();
 
 }
