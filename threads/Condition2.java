@@ -35,16 +35,17 @@ public class Condition2 {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 	
 	boolean status = Machine.interrupt().disable(); //referenced from Semaphore.java
-	
+	    
 	waitQueue.waitForAccess(KThread.currentThread()); //put thread on wait queue
 
 	conditionLock.release(); 
 	
 	KThread.sleep(); //sleep thread
+	    
+	Machine.interrupt().restore(status);
 
 	conditionLock.acquire();
 	
-	Machine.interrupt().restore(status);
     }
 
     /**
@@ -56,10 +57,11 @@ public class Condition2 {
 	
 	boolean status = Machine.interrupt().disable();
 	
-		KThread nextThread = waitQueue.nextThread();
+	KThread nextThread = waitQueue.nextThread();
 		
-	if (nextThread != null)
-			nextThread.ready();
+	if (nextThread != null) {
+		nextThread.ready();
+	}
 	
 	Machine.interrupt().restore(status);
     }
@@ -71,17 +73,19 @@ public class Condition2 {
     public void wakeAll() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 	
-	boolean status = Machine.interrupt().disable();
+	//boolean status = Machine.interrupt().disable();
 	
 	KThread nextThread;
 	
-	while ((nextThread = waitQueue.nextThread()) != null)
-		nextThread.ready();
+	while ((nextThread = waitQueue.nextThread()) != null) {
+		
+		nextThread.wake();
+	}
 	
 	Machine.interrupt().restore(status);
 	
     }
 
     private Lock conditionLock;
-    private ThreadQueue waitQueue = ThreadedKernel.scheduler.newThreadQueue(true);
+    private ThreadQueue waitQueue = ThreadedKernel.scheduler.newThreadQueue(false);
 }
