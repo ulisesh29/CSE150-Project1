@@ -73,7 +73,7 @@ public class Condition2 {
     public void wakeAll() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 	
-	//boolean status = Machine.interrupt().disable();
+	boolean status = Machine.interrupt().disable();
 	
 	KThread nextThread;
 	
