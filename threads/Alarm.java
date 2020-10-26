@@ -38,13 +38,13 @@ public class Alarm {
     	WaitingThread nextThread;
     	nextThread = waitingQueue.peek();
 
-		while (nextThread.wakeTime() <= currentTime && nextThread != null) {
+	while (nextThread.wakeTime() <= currentTime && nextThread != null) {
 			
-			waitingQueue.poll().thread().ready();
-		}
+		waitingQueue.poll().thread().ready();
+	}
 
-		KThread.yield();
-		Machine.interrupt().restore(status);
+	KThread.yield();
+	Machine.interrupt().restore(status);
     }
 
     /**
@@ -63,11 +63,11 @@ public class Alarm {
      */
     public void waitUntil(long x) {
 	// for now, cheat just to get something working (busy waiting is bad)
-    	if(x <= 0) {
+    	/*if(x <= 0) {
     		
     		return;
     	}
-    	
+    	*/
     	long wakeTime = Machine.timer().getTime() + x;
     	
     	/*while (wakeTime > Machine.timer().getTime()) {
@@ -75,19 +75,19 @@ public class Alarm {
     	}
     	*/
 
-		boolean status = Machine.interrupt().disable();
+	boolean status = Machine.interrupt().disable();
 
-		waitingQueue.add(new WaitingThread(wakeTime, KThread.currentThread()));
+	waitingQueue.add(new WaitingThread(wakeTime, KThread.currentThread()));
 
-		KThread.sleep();
-		Machine.interrupt().restore(status);
+	KThread.sleep();
+	Machine.interrupt().restore(status);
     }
     
     private class WaitingThread implements Comparable<WaitingThread> {
     	
     	WaitingThread(long wakeTime, KThread thread) {
 			
-    		Lib.assertTrue(Machine.interrupt().disabled());
+    		//Lib.assertTrue(Machine.interrupt().disabled());
 
 			this.wakeTime = wakeTime;
 			this.thread = thread;
@@ -126,3 +126,4 @@ public class Alarm {
 	PriorityQueue<WaitingThread> waitingQueue = new PriorityQueue<WaitingThread>();
 
 }
+
