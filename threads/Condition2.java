@@ -1,5 +1,7 @@
 package nachos.threads;
 
+import java.util.LinkedList;
+
 import nachos.machine.*;
 
 /**
@@ -28,24 +30,23 @@ public class Condition2 {
      * Atomically release the associated lock and go to sleep on this condition
      * variable until another thread wakes it using <tt>wake()</tt>. The
      * current thread must hold the associated lock. The thread will
-     * automatically reacquire the lock before <tt>sleep()</tt> returns.
+     * automatically re-acquire the lock before <tt>sleep()</tt> returns.
      */
     public void sleep() {
     	
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 	
 	boolean status = Machine.interrupt().disable(); //referenced from Semaphore.java
-	    
-	waitQueue.waitForAccess(KThread.currentThread()); //put thread on wait queue
+	
+	waitQueue.add(KThread.currentThread()); //put thread on wait queue
 
 	conditionLock.release(); 
 	
 	KThread.sleep(); //sleep thread
-	    
-	Machine.interrupt().restore(status);
 
 	conditionLock.acquire();
 	
+	Machine.interrupt().restore(status);
     }
 
     /**
@@ -57,11 +58,10 @@ public class Condition2 {
 	
 	boolean status = Machine.interrupt().disable();
 	
-	KThread nextThread = waitQueue.nextThread();
+		KThread nextThread = waitQueue.removeFirst();
 		
-	if (nextThread != null) {
-		nextThread.ready();
-	}
+	if (nextThread != null)
+			nextThread.ready();
 	
 	Machine.interrupt().restore(status);
     }
@@ -73,19 +73,11 @@ public class Condition2 {
     public void wakeAll() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 	
-	boolean status = Machine.interrupt().disable();
-	
-	KThread nextThread;
-	
-	while ((nextThread = waitQueue.nextThread()) != null) {
-		
-		nextThread.ready();
-	}
-	
-	Machine.interrupt().restore(status);
+	while (!waitQueue.isEmpty())
+		wake();
 	
     }
 
     private Lock conditionLock;
-    private ThreadQueue waitQueue = ThreadedKernel.scheduler.newThreadQueue(true);
+    private LinkedList<KThread> waitQueue = new LinkedList<KThread>();
 }
