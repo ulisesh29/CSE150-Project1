@@ -36,12 +36,12 @@ public class Communicator {
 		SpeakingFunc++;
 		
 		//put to sleep the ListenFunc. 
-		while(ListingFunc = 0){
+		while(ListeningFunc = 0){
 			LReadyUp.sleep();
 		}
 		
 		--ListeningFunc; 
-		words = word
+		words = word;
 		//once that’s done we have to wake the SpeakFunc.
 		SReadyUp.wake();
 		mutex.release();
