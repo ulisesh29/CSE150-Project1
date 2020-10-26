@@ -1,8 +1,7 @@
 package nachos.threads;
 
 import nachos.machine.*;
-
-import java.util.PriorityQueue;
+import java.util.*;
 
 /**
  * Uses the hardware timer to provide preemption, and to allow threads to sleep
@@ -16,11 +15,57 @@ public class Alarm {
      * <p><b>Note</b>: Nachos will not function correctly with more than one
      * alarm.
      */
+		// sleeping thread queue to keep track of sleeping threads
+		private PriorityQueue<SleepingThread> STQueue;
+		private static long wakeTime;
+
     public Alarm() {
-    	Machine.timer().setInterruptHandler(new Runnable() {
-    		public void run() { timerInterrupt(); }
-	    	});
+	Machine.timer().setInterruptHandler(new Runnable() {
+		public void run() { timerInterrupt(); }
+	    });
+		// creates an empty priority queue of type sleeping threads that uses
+		// the thread comparator class
+		// its initial size is 11 and its capacity grows automatically
+		// as elements are added to the queue
+		Comparator<SleepingThread> comparator = new ThreadComparator();
+		STQueue = new PriorityQueue<SleepingThread>(11,comparator);
     }
+
+
+
+
+	/*
+	*	A private class to store a sleeping thread and the amount of time for
+  *   the thread to wait until waking
+	*/
+	private class SleepingThread {
+		public SleepingThread (KThread thread, long time) {
+			this.st = thread; // stores sleeping thread
+			this.time = time; // stores the amount of time this thread waits until waking
+		}
+		public KThread st;
+		public long time;
+	}
+
+/* a ThreadComparator class to compare the waiting times amongst two threads
+*		The order is based off of the tiem threads require for waiting
+*   Threads that have shorter wait times would be placed in front whereas
+*   threads with longer wait times would be placed in back
+*/
+
+	private class ThreadComparator implements Comparator<SleepingThread>
+  {
+		public int compare (SleepingThread thread1, SleepingThread thread2)
+		{
+			if(thread1.time > thread2.time)
+				return 1;
+			else if (thread1.time < thread2.time)
+				return -1;
+			else
+				return 0;
+		}
+
+  }
 
     /**
      * The timer interrupt handler. This is called by the machine's timer
@@ -29,23 +74,35 @@ public class Alarm {
      * that should be run.
      */
     public void timerInterrupt() {
-	
-    	//KThread.currentThread().yield();
-    	
-    	long currentTime = Machine.timer().getTime();
-    	boolean status = Machine.interrupt().disable();
-    	
-    	WaitingThread nextThread;
-    	nextThread = waitingQueue.peek();
-
-	while (nextThread.wakeTime() <= currentTime && nextThread != null) {
-			
-		waitingQueue.poll().thread().ready();
-	}
-
-	Machine.interrupt().restore(status);
-
 	KThread.currentThread().yield();
+
+
+
+		// head of queue
+		SleepingThread head = STQueue.peek();
+
+		// first checks to see if head is not null and  if the time has
+	  // passed for waiting.
+		// If the time has passed it loops through the priority queue
+		// until it reaches a thread that still has time leftover to wait.
+		while ((head != null) && (head.time <= Machine.timer().getTime()))
+		{
+			// acquire lock
+			boolean status = Machine.interrupt().disable();
+			// place head of queue onto the ready queue
+			head.st.ready();
+			// remove the head of the queue from the priority queue
+			// this is because the head of the queue is no longer sleeping
+			STQueue.remove(head);
+			// advance head variable to the next head of the queue
+			head = STQueue.peek();
+			// release lock
+			Machine.interrupt().restore(status);
+		}
+
+
+
+
     }
 
     /**
@@ -62,68 +119,32 @@ public class Alarm {
      *
      * @see	nachos.machine.Timer#getTime()
      */
-    public void waitUntil(long x) {
-	// for now, cheat just to get something working (busy waiting is bad)
-    	if(x <= 0) {
-    		
-    		return;
-    	}
-    	
-    	long wakeTime = Machine.timer().getTime() + x;
-    	
-    	/*while (wakeTime > Machine.timer().getTime()) {
-    		KThread.yield();
-    	}
-    	*/
 
-	boolean status = Machine.interrupt().disable();
+    public void waitUntil(long x)
+		{
+		// for now, cheat just to get something working (busy waiting is bad)
+		// while (wakeTime > Machine.timer().getTime())
+		//    KThread.yield();
+		// long wakeTime = Machine.timer().getTime() + x;
 
-	waitingQueue.add(new WaitingThread(wakeTime, KThread.currentThread()));
+			wakeTime = Machine.timer().getTime() + x;
+			// checks to see if wakeTime did not pass
+			if (wakeTime > Machine.timer().getTime())
+			{
+					boolean status = Machine.interrupt().disable();
 
-	KThread.sleep();
-	Machine.interrupt().restore(status);
-    }
-    
-    private class WaitingThread implements Comparable<WaitingThread> {
-    	
-    	WaitingThread(long wakeTime, KThread thread) {
-			
-    		Lib.assertTrue(Machine.interrupt().disabled());
+					// Creates new sleeping thread that stores currentThread information and wake time
+					// waketime = current time + x (amount of time requested by thread to add to the 	current time)
+					SleepingThread thread = new SleepingThread(KThread.currentThread(),wakeTime);
 
-			this.wakeTime = wakeTime;
-			this.thread = thread;
-		}
+					// insert sleeping thread onto priority queue
+					STQueue.add(thread);
 
-		public int compareTo(WaitingThread waitingThread) {
-			
-			if (wakeTime < waitingThread.wakeTime) {
-				
-				return -1;
-			}
-			else if (wakeTime > waitingThread.wakeTime) {
-				
-				return 1;
-			}
-			else {
-				
-				return thread.compareTo(waitingThread.thread);
+					// put thread to sleep
+					KThread.currentThread().sleep();
+					// release lock
+					Machine.interrupt().restore(status);
+
 			}
 		}
-
-		public KThread thread() {
-			
-			return thread;
-		}
-		
-		public long wakeTime() {
-			
-			return wakeTime;
-		}
-
-		KThread thread; 
-		long wakeTime;
-    }
-    
-	PriorityQueue<WaitingThread> waitingQueue = new PriorityQueue<WaitingThread>();
-
 }
