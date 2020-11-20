@@ -6,6 +6,11 @@ import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import nachos.machine.Lib;
+import nachos.machine.Machine;
+import nachos.threads.PriorityScheduler.PriorityQueue;
+import nachos.threads.PriorityScheduler.ThreadState;
+
 /**
  * A scheduler that chooses threads using a lottery.
  *
@@ -43,6 +48,52 @@ public class LotteryScheduler extends PriorityScheduler {
      */
     public ThreadQueue newThreadQueue(boolean transferPriority) {
 	// implement me
-	return null;
+	return new ThreadQueue(transferPriority);
     }
+
+protected ThreadState getThreadState(KThread thread) {
+	if (thread.schedulingState == null)
+		thread.schedulingState = new ThreadState(thread);
+
+	return (ThreadState) thread.schedulingState;
+}
+
+public void setPriority(KThread thread, int priority) {
+	Lib.assertTrue(Machine.interrupt().disabled());
+
+	Lib.assertTrue(priority >= priorityMinimum
+			&& priority <= priorityMaximum);
+
+	getThreadState(thread).setPriority(priority);
+}
+
+public boolean increasePriority() {
+	boolean intStatus = Machine.interrupt().disable();
+
+	KThread thread = KThread.currentThread();
+
+	int priority = getPriority(thread);
+	if (priority == priorityMaximum)
+		return false;
+
+	setPriority(thread, priority + 1);
+
+	Machine.interrupt().restore(intStatus);
+	return true;
+}
+
+public boolean decreasePriority() {
+	boolean intStatus = Machine.interrupt().disable();
+
+	KThread thread = KThread.currentThread();
+
+	int priority = getPriority(thread);
+	if (priority == priorityMinimum)
+		return false;
+
+	setPriority(thread, priority - 1);
+
+	Machine.interrupt().restore(intStatus);
+	return true;
+	}
 }
