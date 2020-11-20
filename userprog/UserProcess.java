@@ -101,7 +101,7 @@ public class UserProcess {
 		Machine.processor().setPageTable(pageTable);
 	}
 
-	protected boolean didAllocate(int vpn, int desiredPages, boolean readOnly) {
+	/*protected boolean didAllocate(int vpn, int desiredPages, boolean readOnly) {
 
 		LinkedList<TranslationEntry> allocated = new LinkedList<TranslationEntry>();
 
@@ -130,6 +130,8 @@ public class UserProcess {
 		}
 		return true;
 	}
+	
+	*/
 
 	/**
 	 * Read a null-terminated string from this process's virtual memory. Read at
@@ -196,6 +198,36 @@ public class UserProcess {
 	public int readVirtualMemory(int vaddr, byte[] data, int offset, int length) {
 		//make sure that offset and length are not negative values and they don't exceed length of array being stored to
 		Lib.assertTrue(offset >= 0 && length >= 0 && offset + length <= data.length);
+		
+		//code added, task 2
+		Processor processor = Machine.processor();//
+	
+		int ppn, vpn, addrOffset, physAddr; //
+		
+		vpn = Processor.pageFromAddress(vaddr); //
+		addrOffset = Processor.offsetFromAddress(vaddr);//
+	
+		TranslationEntry transEntry = pageTable[vpn]; //
+		transEntry.used = true; // set true when read or write
+	
+		ppn = transEntry.ppn; //
+	
+		if(ppn < 0 || ppn >= processor.getNumPhysPages()) { //
+		
+			return 0;
+		}
+	
+		physAddr = pageSize * ppn; //
+		physAddr = physAddr + addrOffset; //
+
+		int amount = Math.min(length, memory.length-physAddr); //vaddr -> physAddr
+		System.arraycopy(memory, vaddr, data, offset, amount); //vaddr -> physAddr
+		
+
+		return amount;
+    }
+		
+		/*
 
 		//If there is nothing in pageTable, return null
 		if(numPages == 0) {
@@ -252,6 +284,7 @@ public class UserProcess {
 		}
 
 		return transfer;
+		*/
 	}
 
 	/**
@@ -294,7 +327,35 @@ public class UserProcess {
 		}
 
 		byte[] memory = Machine.processor().getMemory();
+		
+		Processor processor = Machine.processor();//
+	int ppn, vpn, addrOffset, physAddr; //
+	
+	vpn = Processor.pageFromAddress(vaddr); //
+	addrOffset = Processor.offsetFromAddress(vaddr); //
+	
+	TranslationEntry transEntry = pageTable[vpn]; //
+	transEntry.dirty = true; // set true for write
+	transEntry.used = true; //
+	
+	ppn = transEntry.ppn;//
+	//physAddr = ppn * pageSize;
+	//physAddr = physAddr + addrOffset;
+	
+	if(ppn < 0 || ppn >= processor.getNumPhysPages() || transEntry.readOnly) { //
+		
+		return 0;
+	}
+		
+	if (vaddr < 0 || vaddr >= memory.length)
+	    return 0;
 
+	int amount = Math.min(length, memory.length-vaddr);
+	System.arraycopy(data, offset, memory, vaddr, amount);
+
+	return amount;
+    }
+/*
 		int end = vaddr + length - 1;
 		int transfer = 0;
 
@@ -332,6 +393,7 @@ public class UserProcess {
 		}
 		return transfer;
 	}
+	*/
 
 	/**
 	 * Load the executable with the specified name into this process, and
@@ -398,7 +460,10 @@ public class UserProcess {
 
 		// program counter initially points at the program entry point
 		initialPC = coff.getEntryPoint();
+		numPages += stackPages;
+		initialSP = numPages*pageSize;
 
+		/*
 		// next comes the stack; stack pointer initially points to top of it
 		boolean stackAllocation = didAllocate(numPages, stackPages, false);
 		if (!stackAllocation) {
@@ -424,6 +489,7 @@ public class UserProcess {
 			numPages = 0;
 			return false;
 		}
+		*/
 
 		if (!loadSections())
 			return false;
@@ -468,10 +534,16 @@ public class UserProcess {
 			for (int i = 0; i < section.getLength(); i++) {
 				int vpn = section.getFirstVPN() + i;
 
-				TranslationEntry te = pageTable[vpn];
+				/*TranslationEntry te = pageTable[vpn];
 				if (te == null)
 					return false;
 				section.loadPage(i, te.ppn);
+				*/
+		//code added
+		TranslationEntry transEntry = pageTable[vpn];
+		transEntry.readOnly = section.isReadOnly(); // coffSection		
+		
+		section.loadPage(i, transEntry.ppn);
 			}
 		}
 
@@ -482,7 +554,7 @@ public class UserProcess {
 	 * Release any resources allocated by <tt>loadSections()</tt>.
 	 */
 	protected void unloadSections() {
-		int i;
+		/*int i;
 		for (i = 0; i < pageTable.length; ++i)
 			if (pageTable[i].valid) {
 				UserKernel.deletePage(pageTable[i].ppn);
@@ -496,6 +568,21 @@ public class UserProcess {
 			}
 		}
 		coff.close();
+		*/
+		
+		//coded added, task 2    		
+        	for(int i=0; i < numPages; i++) {
+            	if(pageTable[i].ppn >= 0 && pageTable[i].ppn < Machine.processor().getNumPhysPages()) {
+
+        	   	Machine.interrupt().disable();
+        	   	UserKernel.freePages.add(pageTable[i].ppn);
+        	   	Machine.interrupt().enable();
+
+            	}
+            	else {
+            		coff.close();
+            	}
+        	}
 
 	}
 
