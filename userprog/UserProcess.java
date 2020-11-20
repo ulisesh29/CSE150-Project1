@@ -433,7 +433,7 @@ public class UserProcess {
 				Lib.debug(dbgProcess, "\tfragmented executable");
 				return false;
 			}
-			if (!didAllocate(numPages, section.getLength(), section.isReadOnly())) {
+			/*if (!didAllocate(numPages, section.getLength(), section.isReadOnly())) {
 				for (int i = 0; i < pageTable.length; ++i)
 					if (pageTable[i].valid) {
 						UserKernel.deletePage(pageTable[i].ppn);
@@ -443,6 +443,7 @@ public class UserProcess {
 				return false;
 			}
 		}
+		*/
 
 		// make sure the argv array will fit in one page
 		byte[][] argv = new byte[args.length][];
