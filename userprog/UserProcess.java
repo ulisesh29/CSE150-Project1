@@ -200,25 +200,25 @@ public class UserProcess {
 		Lib.assertTrue(offset >= 0 && length >= 0 && offset + length <= data.length);
 		
 		//code added, task 2
-		Processor processor = Machine.processor();//
+		Processor processor = Machine.processor();//t2
 	
-		int ppn, vpn, addrOffset, physAddr; //
+		int ppn, vpn, addrOffset, physAddr; //t2
 		
-		vpn = Processor.pageFromAddress(vaddr); //
-		addrOffset = Processor.offsetFromAddress(vaddr);//
+		vpn = Processor.pageFromAddress(vaddr); //t2
+		addrOffset = Processor.offsetFromAddress(vaddr);//t2
 	
-		TranslationEntry transEntry = pageTable[vpn]; //
+		TranslationEntry transEntry = pageTable[vpn]; //t2
 		transEntry.used = true; // set true when read or write
 	
-		ppn = transEntry.ppn; //
+		ppn = transEntry.ppn; //t2
 	
-		if(ppn < 0 || ppn >= processor.getNumPhysPages()) { //
+		if(ppn < 0 || ppn >= processor.getNumPhysPages()) { //t2
 		
 			return 0;
 		}
 	
-		physAddr = pageSize * ppn; //
-		physAddr = physAddr + addrOffset; //
+		physAddr = pageSize * ppn; //t2
+		physAddr = physAddr + addrOffset; //t2
 
 		int amount = Math.min(length, memory.length-physAddr); //vaddr -> physAddr
 		System.arraycopy(memory, vaddr, data, offset, amount); //vaddr -> physAddr
@@ -328,21 +328,21 @@ public class UserProcess {
 
 		byte[] memory = Machine.processor().getMemory();
 		
-		Processor processor = Machine.processor();//
-	int ppn, vpn, addrOffset, physAddr; //
+		Processor processor = Machine.processor();//t2
+	int ppn, vpn, addrOffset, physAddr; //t2
 	
-	vpn = Processor.pageFromAddress(vaddr); //
-	addrOffset = Processor.offsetFromAddress(vaddr); //
+	vpn = Processor.pageFromAddress(vaddr); //t2
+	addrOffset = Processor.offsetFromAddress(vaddr); //t2
 	
 	TranslationEntry transEntry = pageTable[vpn]; //
 	transEntry.dirty = true; // set true for write
-	transEntry.used = true; //
+	transEntry.used = true; //t2
 	
-	ppn = transEntry.ppn;//
+	ppn = transEntry.ppn; //t2
 	//physAddr = ppn * pageSize;
 	//physAddr = physAddr + addrOffset;
 	
-	if(ppn < 0 || ppn >= processor.getNumPhysPages() || transEntry.readOnly) { //
+	if(ppn < 0 || ppn >= processor.getNumPhysPages() || transEntry.readOnly) { //t2
 		
 		return 0;
 	}
