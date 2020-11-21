@@ -48,7 +48,7 @@ public class LotteryScheduler extends PriorityScheduler {
      */
     public ThreadQueue newThreadQueue(boolean transferPriority) {
 	// implement me
-	return new ThreadQueue(transferPriority);
+	return new PriorityThreadQueue(transferPriority);
     }
 
 protected ThreadState getThreadState(KThread thread) {
