@@ -5,6 +5,7 @@ import nachos.machine.*;
 import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.PriorityQueue;
 
 import nachos.machine.Lib;
 import nachos.machine.Machine;
