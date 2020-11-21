@@ -33,6 +33,8 @@ public class UserKernel extends ThreadedKernel {
 	    
 	//code added; task 2, initializing freePages
 	
+	pageLock = new Lock();
+
 	//freePages = new LinkedList<Integer>();
 	for(int i = 0; i < Machine.processor().getNumPhysPages(); i++) {
 		
@@ -110,6 +112,27 @@ public class UserKernel extends ThreadedKernel {
 
 	KThread.currentThread().finish();
     }
+	
+// needed for didAllocate
+	public static int getPage() {
+    	
+    	int val;
+    	
+    	pageLock.acquire();
+    	if(freePages.size() > 0) {
+    		
+    		val = freePages.removeFirst().intValue();
+    	}
+    	else {
+    		
+    		val = -1;
+    	}
+    	
+    	pageLock.release();
+    	
+    	return val;
+    	
+    }
 
     /**
      * Terminate this kernel. Never returns.
@@ -126,4 +149,6 @@ public class UserKernel extends ThreadedKernel {
 	
     //code added; task 2 bullet point one
     public static LinkedList<Integer> freePages = new LinkedList<Integer>();
+    private static Lock pageLock;
+
 }
