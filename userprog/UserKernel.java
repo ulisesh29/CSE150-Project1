@@ -133,6 +133,15 @@ public class UserKernel extends ThreadedKernel {
     	return val;
     	
     }
+    
+	public static boolean deletePage(int ppn) {
+    	
+    	pageLock.acquire();
+    	freePages.add(ppn);
+    	pageLock.release();
+    	
+    	return true;
+    }
 
     /**
      * Terminate this kernel. Never returns.
