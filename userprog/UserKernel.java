@@ -159,5 +159,13 @@ public class UserKernel extends ThreadedKernel {
     //code added; task 2 bullet point one
     public static LinkedList<Integer> freePages = new LinkedList<Integer>();
     private static Lock pageLock;
+	
+    // Added variables for task 3
+    
+    public static int processID;
+    public static int processCount;
+	
+    public static Semaphore pCountMutex;
+    public static Semaphore processIDMutex;
 
 }
