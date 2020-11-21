@@ -628,17 +628,6 @@ public class UserProcess {
  		else
  			return 0;
     }
-	private static final int
-	syscallHalt = 0,
-	syscallExit = 1,
-	syscallExec = 2,
-	syscallJoin = 3,
-	syscallCreate = 4,
-	syscallOpen = 5,
-	syscallRead = 6,
-	syscallWrite = 7,
-	syscallClose = 8,
-	syscallUnlink = 9;
     
     private int handleExit(int status) {
     	
