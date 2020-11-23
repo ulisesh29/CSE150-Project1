@@ -677,7 +677,7 @@ public class UserProcess {
 
         	child.finished.P();
 
-        	writeVirtualMemory(status, Lib.bytesFromInt(child.statusVAddr));
+        	writeVirtualMemory(statusVAddr, Lib.bytesFromInt(child.status));
 
         	if (child.exit){
             		return 1;
@@ -1139,4 +1139,9 @@ public class UserProcess {
 	protected UThread thread; //thread needed for joining
 	protected HashMap<Integer, Integer> childProcessStatus; //maintain child status
 	protected static int counter = 0; //needed to make process ID
+	protected static Hashtable<Integer, UserProcess> running = new Hashtable<Integer, UserProcess>();
+    protected static Hashtable<Integer, UserProcess> done = new Hashtable<Integer, UserProcess>();
+    protected Semaphore finished;
+    protected boolean exit = true;
+    protected int status;
 }
