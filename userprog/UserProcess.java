@@ -661,69 +661,31 @@ public class UserProcess {
 
 	private int handleJoin(int processID, int statusVAddr)
 	{
-		//if process ID or virtual Address is out of range
-		if (processID < 0 || statusVAddr < 0)
-		{
-			return -1;
-		}
-		//create a child process variable
-		UserProcess child = null;
-		//get the current number of child processes
-		int numberOfChildren = childProcesses.size();
+		if (!childProcesses.contains(processID)) {
+            		return -1;
+        	}
 
-		//iterate through each child
-		for (int i = 0; i < numberOfChildren; i++)
-		{
-			// if child has the same process ID, its okay to join
-			if (childProcesses.get(i).processID == processID)
-			{
-				// set the child as the child in the list with the matching ID
-				child = childProcesses.get(i);
-				break;
-			}
-		}
+        	childProcesses.remove(processID);
 
-		//if the result is null, no parent can join to the child
-		if (child == null)
-		{
-			Lib.debug(dbgProcess, "handleJoin:processID is not the child");
-			return -1;
-		}
-		// at this point the child should be able to join
-		// using the join function, join the child thread
-		child.thread.join();
-		child.parentProcess = null;
+        	UserProcess child = running.get(processID);
 
-		childProcesses.remove(child); // LEX this is out of order but it works
+        	if (child == null) {
+            		child = done.get(processID);
+            		if (child == null) {
+				return -1;
+            		}
+        	}
 
-		// critical code
-		lock.acquire();
-		// wait for the lock and get the child process ID
-		Integer status = childProcessStatus.get(child.processID);
-		lock.release();
-		// remove the child from the childProcesses Join List
-		if (status == null)
-		{
-			//if status is not null, the child can exit
-			Lib.debug(dbgProcess, "handleJoin:Cannot find the exit status of the child");
-			return 0;
-		}
-		else
-		{
-			//create a new buffer of 4 bytes
-			byte[] buffer = new byte[4];
-			//get the buffer
-			buffer = Lib.bytesFromInt(status);
-			//if the value status is 4 bytes we can return 1
-			if (writeVirtualMemory(statusVAddr, buffer) == 4)
-			{
-				return 1;
-			} else
-			{
-				Lib.debug(dbgProcess, "handleJoin:Write status failed");
-				return 0;
-			}
-		}
+        	child.finished.P();
+
+        	writeVirtualMemory(status, Lib.bytesFromInt(child.statusVAddr));
+
+        	if (child.exit){
+            		return 1;
+        	}
+        	else{
+            		return 0;
+        	}
 	}
 
 	/**
