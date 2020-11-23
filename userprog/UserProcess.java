@@ -34,7 +34,6 @@ public class UserProcess {
 		lock = new Lock();
 		boolean stat = Machine.interrupt().disable();
 		lock1.acquire();
-		// processID = UserKernel.numProcess++; // LEX please check this
 		processID = counter++;
 		lock1.release();
 
