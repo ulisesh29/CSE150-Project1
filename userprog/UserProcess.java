@@ -50,9 +50,15 @@ public class UserProcess {
 		//make the parent process null for a given user process
 		parentProcess = null;
 		//make a list of child processes for a "parent" to have if it does have children
-		childProcesses = new LinkedList<UserProcess>();
+		childProcesses = new HashSet<Integer>();
 		//maintain the list of children status regarding whether to exit or not
 		childProcessStatus = new HashMap<Integer, Integer>();
+        status = -1;
+        running.put(ID, this);
+        finished = new Semaphore(0);
+        manager = new Manager();
+        manager.add(0, UserKernel.console.openForReading());
+        manager.add(1, UserKernel.console.openForWriting());
 	}
 
 	/**
@@ -539,39 +545,23 @@ public class UserProcess {
 
 	private int handleExit(int status)
 	{
-		if (parentProcess != null)
-		{
-			//acquire the lock for the parent process
-			lock.acquire(); // LEX please check this
-			parentProcess.childProcessStatus.put(processID, status);
-			lock.release(); // LEX please check this
-
-		}
-
-		unloadSections();
-
-		int childrenNum = childProcesses.size();
-		//iterate through children list
-		for (int i = 0; i < childrenNum; i++)
-		{
-			//remove all the children from the childProcessList
-			UserProcess child = childProcesses.removeFirst();
-			//set the child parent back to null
-			child.parentProcess = null;
-		}
-		//System.out.println("exit" + processID + status);
-
-		//if the process id is the root terminate
-		if (processID == 0)
-		{
-			Kernel.kernel.terminate();
-		} else
-		{
-			//finish the thread and then return 0
-			UThread.finish();
-		}
-
-		return 0;
+		this.status = status;
+        for(int i = 2; i < maxFileDesc; i++) {
+            manager.close(i);
+        }
+        unloadSections();
+        
+        running.remove(ID);
+        done.put(ID, this);
+        
+        finished.V();
+        
+        if(running.isEmpty()) {
+            Kernel.kernel.terminate();
+        }
+        UThread.finish();
+        
+        return 0;
 
 	}
 
@@ -581,7 +571,6 @@ public class UserProcess {
 		//check to see if arguments are valid
 		if (virtualAddress < 0 || arg1 < 0 || arg2 < 0)
 		{
-			Lib.debug(dbgProcess, "handleExec:Invalid entry");
 			return -1;
 		}
 
@@ -592,14 +581,12 @@ public class UserProcess {
 		//if file name does not exist return no process ID
 		if (fileName == null)
 		{
-			Lib.debug(dbgProcess, "handleExec:file name does not exist");
 			return -1;
 		}
 
 		//check that the file extension is the correct format
 		if (fileName.contains(".coff") == false)
 		{
-			Lib.debug(dbgProcess, "handleExec: Incorrect file format, need to end with .coff");
 			return -1;
 		}
 
@@ -617,7 +604,6 @@ public class UserProcess {
 			//if address not 4 bytes return -1
 			if (memReadLen != 4)
 			{
-				Lib.debug(dbgProcess, "handleExec:argument address incorect size");
 				return -1;
 			}
 
@@ -627,31 +613,33 @@ public class UserProcess {
 			//get the virtual memory string from the virtual address previously grabbed
 			String arg = readVirtualMemoryString(argVirtualAddress, 256);
 
-			if (arg == null)
+			//store the argument into the args holder object
+			argsHolder[i] = arg;
+			
+			if (argsHolder[i] == null)
 			{
-				Lib.debug(dbgProcess, "handleExec:arugment null");
 				return -1;
 			}
 
-			//store the argument into the args holder object
-			argsHolder[i] = arg;
 		}
 
 		//create a new child process
 		UserProcess childPro = UserProcess.newUserProcess();
 
-		//if the child process cannot execute, return -1
-		if (childPro.execute(fileName, argsHolder) == false)
-		{
-			Lib.debug(dbgProcess, "handleExec:child process failure");
-			return -1;
-		}
 
 		//set the child process's parent to this process
 		childPro.parentProcess = this;
 
 		//add the child to the child processes list
-		this.childProcesses.add(childPro);
+		this.childProcesses.add(childPro.processID);
+		
+		saveState();
+		
+		//if the child process cannot execute, return -1
+		if (childPro.execute(fileName, argsHolder) == false)
+		{
+			return -1;
+		}
 
 		//return the child process ID
 		return childPro.processID;
@@ -1110,6 +1098,66 @@ public class UserProcess {
 	private final int ROOTPROCESS = 0;
 
 	public static final int exceptionIllegalSyscall = 100;
+	
+	public class Manager {
+        public OpenFile desc[] = new OpenFile[maxFileDesc];
+        
+        public int add(int i, OpenFile file) {
+            if(i < 0 || i >= maxFileDesc) {
+                return -1;
+            }
+            if(desc[i] == null) {
+                desc[i] = file;
+                if(folder.get(file.getName()) != null) {
+                    folder.put(file.getName(), folder.get(file.getName()) + 1);
+                }
+                else {
+                    folder.put(file.getName(), 1);
+                }
+                return i;
+            }
+            return -1;
+        }
+        
+        public int add(OpenFile file) {
+            for(int i = 0; i < maxFileDesc; i++) {
+                if(desc[i] == null) {
+                    return add(i, file);
+                }
+            }
+            return -1;
+        }
+        
+        public int close(int descriptor) {
+            if(desc[descriptor] == null) {
+                return -1;
+            }
+            OpenFile file = desc[descriptor];
+            desc[descriptor] = null;
+            file.close();
+            
+            String name = file.getName();
+            
+            if(folder.get(name) > 1) {
+                folder.put(name, folder.get(name) - 1);
+            }
+            else {
+                folder.remove(name);
+                if(removed.contains(name)) {
+                    removed.remove(name);
+                    UserKernel.fileSystem.remove(name);
+                }
+            }
+            return 0;
+        }
+        
+        public OpenFile get(int descriptor) {
+            if(descriptor < 0 || descriptor >= maxFileDesc) {
+                return null;
+            }
+            return desc[descriptor];
+        }
+    }
 
 	/** The program being run by this process. */
 	protected Coff coff;
@@ -1134,14 +1182,19 @@ public class UserProcess {
 
 	//PART 3 VARIABLES
 	protected UserProcess parentProcess; //hold parent process
-	protected LinkedList<UserProcess> childProcesses; //maintain list of child processes
+	protected HashSet<Integer> childProcesses; //maintain list of child processes
+	protected Manager manager;
+	protected static Hashtable<String, Integer> folder = new Hashtable<String, Integer>();
+	protected static HashSet<String> removed = new HashSet<String>();
 	private static Lock lock; //lock needed for implementation
 	protected UThread thread; //thread needed for joining
+	protected static final int maxFileDesc = 16;
+	protected int ID;
 	protected HashMap<Integer, Integer> childProcessStatus; //maintain child status
 	protected static int counter = 0; //needed to make process ID
 	protected static Hashtable<Integer, UserProcess> running = new Hashtable<Integer, UserProcess>();
-    protected static Hashtable<Integer, UserProcess> done = new Hashtable<Integer, UserProcess>();
-    protected Semaphore finished;
-    protected boolean exit = true;
-    protected int status;
+    	protected static Hashtable<Integer, UserProcess> done = new Hashtable<Integer, UserProcess>();
+    	protected Semaphore finished;
+    	protected boolean exit = true;
+    	protected int status;
 }
