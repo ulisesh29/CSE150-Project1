@@ -660,7 +660,7 @@ public class UserProcess {
 
 	private int handleJoin(int processID, int statusVAddr)
 	{
-		if (!childProcesses.contains(processID)) {
+		/*if (!childProcesses.contains(processID)) {
             		return -1;
         	}
 
@@ -684,7 +684,55 @@ public class UserProcess {
         	}
         	else{
             		return 0;
+        	} */
+		
+				if(processID < 0 || statusVAddr < 0) {
+			
+			return -1;
+		}
+		
+		if(!childProcesses.contains(processID)) {
+            		return -1;
         	}
+
+        	childProcesses.remove(processID);
+
+        	UserProcess child = running.get(processID);
+
+        	if (child == null) {
+            		//child = done.get(processID);
+            		//if (child == null) {
+            		//	return -1;
+            		//}
+        		return -1;
+        	}
+        	
+        	child.thread.join();
+        	childProcesses.remove(child);
+        	child.parentProcess = null;
+        	
+        	lock.acquire();
+        	Integer status = childProcessStatus.get(processID);
+        	lock.release();
+        	
+        	if(status != null) {
+        		
+        		int bytes = writeVirtualMemory(statusVAddr, Lib.bytesFromInt(child.status));
+
+        		if(bytes == 4) {
+        			
+        			return 1;
+        		}
+        		else {
+        			
+        			return 0;
+        		}
+        	}
+        	else {
+        		
+        		return 0;
+        	}
+
 	}
 
 	/**
