@@ -38,20 +38,19 @@ public class LotteryScheduler extends PriorityScheduler {
      *					to the owning thread.
      * @return	a new lottery thread queue.
      */
-    public ThreadQueue newThreadQueue(boolean transferPriority) {
-	// implement me
+    public ThreadQueue newThreadQueue(boolean transferPriority) { //to intialize number of tickets
     //return null;
 	return newThreadQueue(transferPriority);
     }
 
-protected ThreadState getThreadState(KThread thread) {
+protected ThreadState getThreadState(KThread thread) { 
 	if (thread.schedulingState == null)
 		thread.schedulingState = new ThreadState(thread);
 
 	return (ThreadState) thread.schedulingState;
 }
 
-public void setPriority(KThread thread, int priority) { // 
+public void setPriority(KThread thread, int priority) {
 	Lib.assertTrue(Machine.interrupt().disabled());
 
 	Lib.assertTrue(priority >= priorityMinimum
