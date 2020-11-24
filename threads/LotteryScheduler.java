@@ -1,15 +1,7 @@
 package nachos.threads;
 
-import nachos.machine.*;
-
-import java.util.TreeSet;
-import java.util.HashSet;
-import java.util.Iterator;
-
 import nachos.machine.Lib;
 import nachos.machine.Machine;
-import nachos.threads.PriorityScheduler.PriorityQueue;
-import nachos.threads.PriorityScheduler.ThreadState;
 
 /**
  * A scheduler that chooses threads using a lottery.
@@ -48,7 +40,8 @@ public class LotteryScheduler extends PriorityScheduler {
      */
     public ThreadQueue newThreadQueue(boolean transferPriority) {
 	// implement me
-	return new PriorityThreadQueue(transferPriority);
+    //return null;
+	return newThreadQueue(transferPriority);
     }
 
 protected ThreadState getThreadState(KThread thread) {
@@ -58,7 +51,7 @@ protected ThreadState getThreadState(KThread thread) {
 	return (ThreadState) thread.schedulingState;
 }
 
-public void setPriority(KThread thread, int priority) {
+public void setPriority(KThread thread, int priority) { // 
 	Lib.assertTrue(Machine.interrupt().disabled());
 
 	Lib.assertTrue(priority >= priorityMinimum
@@ -67,7 +60,7 @@ public void setPriority(KThread thread, int priority) {
 	getThreadState(thread).setPriority(priority);
 }
 
-public boolean increasePriority() {
+public boolean increasePriority() { //for increasing priority count of the current thread 
 	boolean intStatus = Machine.interrupt().disable();
 
 	KThread thread = KThread.currentThread();
@@ -82,7 +75,7 @@ public boolean increasePriority() {
 	return true;
 }
 
-public boolean decreasePriority() {
+public boolean decreasePriority() { //for decreasing priority count of the current thread
 	boolean intStatus = Machine.interrupt().disable();
 
 	KThread thread = KThread.currentThread();
